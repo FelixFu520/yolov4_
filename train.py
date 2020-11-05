@@ -1,6 +1,6 @@
-#-------------------------------------#
+# ------------------------------------- #
 #       对数据集进行训练
-#-------------------------------------#
+# ------------------------------------- #
 import os
 import numpy as np
 import time
@@ -16,15 +16,19 @@ from nets.yolo_training import YOLOLoss,Generator
 from nets.yolo4 import YoloBody
 from tqdm import tqdm
 
-#---------------------------------------------------#
+
+# ---------------------------------------------------#
 #   获得类和先验框
-#---------------------------------------------------#
+# ---------------------------------------------------#
 def get_classes(classes_path):
-    '''loads the classes'''
+    '''
+    loads the classes
+    '''
     with open(classes_path) as f:
         class_names = f.readlines()
     class_names = [c.strip() for c in class_names]
     return class_names
+
 
 def get_anchors(anchors_path):
     '''loads the anchors from a file'''
@@ -33,9 +37,11 @@ def get_anchors(anchors_path):
     anchors = [float(x) for x in anchors.split(',')]
     return np.array(anchors).reshape([-1,3,2])[::-1,:,:]
 
+
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
         return param_group['lr']
+
 
 def fit_one_epoch(net,yolo_losses,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda):
     total_loss = 0
@@ -105,34 +111,26 @@ def fit_one_epoch(net,yolo_losses,epoch,epoch_size,epoch_size_val,gen,genval,Epo
     print('Saving state, iter:', str(epoch+1))
     torch.save(model.state_dict(), 'logs/Epoch%d-Total_Loss%.4f-Val_Loss%.4f.pth'%((epoch+1),total_loss/(epoch_size+1),val_loss/(epoch_size_val+1)))
 
-#----------------------------------------------------#
+
+# ---------------------------------------------------- #
 #   检测精度mAP和pr曲线计算参考视频
 #   https://www.bilibili.com/video/BV1zE411u7Vw
-#----------------------------------------------------#
+# ---------------------------------------------------- #
 if __name__ == "__main__":
-    #-------------------------------#
-    #   输入的shape大小
-    #   显存比较小可以使用416x416
-    #   显存比较大可以使用608x608
-    #-------------------------------#
-    input_shape = (416,416)
-    #-------------------------------#
-    #   tricks的使用设置
-    #-------------------------------#
+    # 输入的shape大小, 显存比较小可以使用416x416, 显存比较大可以使用608x608
+    input_shape = 416, 416
+
+    # tricks的使用设置
     Cosine_lr = False
     mosaic = True
-    # 用于设定是否使用cuda
-    Cuda = True
+    Cuda = True  # 用于设定是否使用cuda
     smoooth_label = 0
-    #-------------------------------#
-    #   Dataloder的使用
-    #-------------------------------#
-    Use_Data_Loader = True
 
+    # Dataloder的使用
+    Use_Data_Loader = True
     annotation_path = '2007_train.txt'
-    #-------------------------------#
-    #   获得先验框和类
-    #-------------------------------#
+
+    # 获得先验框和类
     anchors_path = 'model_data/yolo_anchors.txt'
     classes_path = 'model_data/voc_classes.txt'   
     class_names = get_classes(classes_path)
@@ -140,10 +138,9 @@ if __name__ == "__main__":
     num_classes = len(class_names)
     
     # 创建模型
-    model = YoloBody(len(anchors[0]),num_classes)
-    #-------------------------------------------#
-    #   权值文件的下载请看README
-    #-------------------------------------------#
+    model = YoloBody(len(anchors[0]), num_classes)
+
+    # 权值文件的下载请看README
     model_path = "model_data/yolo4_weights.pth"
     # 加快模型训练的效率
     print('Loading weights into state dict...')
@@ -178,14 +175,14 @@ if __name__ == "__main__":
     num_val = int(len(lines)*val_split)
     num_train = len(lines) - num_val
     
-    #------------------------------------------------------#
+    # ------------------------------------------------------#
     #   主干特征提取网络特征通用，冻结训练可以加快训练速度
     #   也可以在训练初期防止权值被破坏。
     #   Init_Epoch为起始世代
     #   Freeze_Epoch为冻结训练的世代
     #   Epoch总训练世代
     #   提示OOM或者显存不足请调小Batch_size
-    #------------------------------------------------------#
+    # ------------------------------------------------------#
     if True:
         lr = 1e-3
         Batch_size = 4

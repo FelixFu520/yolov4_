@@ -27,7 +27,7 @@
 - [ ] ……balabla
 
 ### 所需环境
-torch==1.2.0
+[requirements.txt](requirements.txt)
 
 ### 注意事项
 代码中的yolo4_weights.pth是基于608x608的图片训练的，但是由于显存原因。我将代码中的图片大小修改成了416x416。有需要的可以修改回来。 代码中的默认anchors是基于608x608的图片的。   
@@ -78,13 +78,16 @@ d、利用video.py可进行摄像头检测。
 ### 训练步骤
 1、本文使用VOC格式进行训练。  
 2、训练前将标签文件放在VOCdevkit文件夹下的VOC2007文件夹下的Annotation中。  
-3、训练前将图片文件放在VOCdevkit文件夹下的VOC2007文件夹下的JPEGImages中。  
-4、在训练前利用voc2yolo4.py文件生成对应的txt。  
-5、再运行根目录下的voc_annotation.py，运行前需要将classes改成你自己的classes。**注意不要使用中文标签，文件夹中不要有空格！**   
+3、训练前将图片文件放在VOCdevkit文件夹下的VOC2007文件夹下的JPEGImages中。 
+4、运行根目录下的kmeans_for_anchors.py，生成anchors，并存放到model_data/yolo_anchors.txt。
+5、在训练前利用voc2yolo4.py文件生成对应的txt。存放所有文件名。  
+6、再运行根目录下的voc_annotation.py，运行前需要将classes改成你自己的classes。**注意不要使用中文标签，文件夹中不要有空格！**   
 ```python
 classes = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 ```
-6、此时会生成对应的2007_train.txt，每一行对应其**图片位置**及其**真实框的位置**。  
+此时会生成对应的2007_train.txt，每一行对应其**图片位置**及其**真实框的位置**。  
+`/root/yolov4_/VOCdevkit/VOC2007/JPEGImages/004017.jpg 237,1,450,217,15 10,4,450,375,14`
+
 7、**在训练前需要务必在model_data下新建一个txt文档，文档中输入需要分的类，在train.py中将classes_path指向该文件**，示例如下：   
 ```python
 classes_path = 'model_data/new_classes.txt'    
