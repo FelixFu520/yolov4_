@@ -4,9 +4,8 @@ import torch.nn as nn
 import math
 from collections import OrderedDict
 
-#-------------------------------------------------#
-#   MISH激活函数
-#-------------------------------------------------#
+
+# MISH激活函数
 class Mish(nn.Module):
     def __init__(self):
         super(Mish, self).__init__()
@@ -14,10 +13,8 @@ class Mish(nn.Module):
     def forward(self, x):
         return x * torch.tanh(F.softplus(x))
 
-#-------------------------------------------------#
-#   卷积块
-#   CONV+BATCHNORM+MISH
-#-------------------------------------------------#
+
+# 卷积块:CONV+BATCHNORM+MISH
 class BasicConv(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1):
         super(BasicConv, self).__init__()
@@ -32,10 +29,8 @@ class BasicConv(nn.Module):
         x = self.activation(x)
         return x
 
-#---------------------------------------------------#
-#   CSPdarknet的结构块的组成部分
-#   内部堆叠的残差块
-#---------------------------------------------------#
+
+# CSPdarknet的结构块的组成部分,内部堆叠的残差块
 class Resblock(nn.Module):
     def __init__(self, channels, hidden_channels=None, residual_activation=nn.Identity()):
         super(Resblock, self).__init__()
@@ -51,11 +46,8 @@ class Resblock(nn.Module):
     def forward(self, x):
         return x + self.block(x)
 
-#---------------------------------------------------#
-#   CSPdarknet的结构块
-#   存在一个大残差边
-#   这个大残差边绕过了很多的残差结构
-#---------------------------------------------------#
+
+#  CSPdarknet的结构块,  存在一个大残差边,  这个大残差边绕过了很多的残差结构
 class Resblock_body(nn.Module):
     def __init__(self, in_channels, out_channels, num_blocks, first):
         super(Resblock_body, self).__init__()
@@ -93,6 +85,7 @@ class Resblock_body(nn.Module):
 
         return x
 
+
 class CSPDarkNet(nn.Module):
     def __init__(self, layers):
         super(CSPDarkNet, self).__init__()
@@ -118,7 +111,6 @@ class CSPDarkNet(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-
     def forward(self, x):
         x = self.conv1(x)
 
@@ -129,6 +121,7 @@ class CSPDarkNet(nn.Module):
         out5 = self.stages[4](out4)
 
         return out3, out4, out5
+
 
 def darknet53(pretrained, **kwargs):
     model = CSPDarkNet([1, 2, 8, 8, 4])

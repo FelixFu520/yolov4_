@@ -9,8 +9,9 @@ from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 from PIL import Image
 from utils.utils import bbox_iou, merge_bboxes
 
+
 def jaccard(_box_a, _box_b):
-    b1_x1, b1_x2 = _box_a[:, 0] - _box_a[:, 2] / 2, _box_a[:, 0] + _box_a[:, 2] / 2
+    b1_x1, b1_x2 = _box_a[:, 0] - _box_a[:, 2] / 2, _box_a[:, 0] + _box_a[:, 2] / 2  # center x,y w,h --> x1y1 x2y2
     b1_y1, b1_y2 = _box_a[:, 1] - _box_a[:, 3] / 2, _box_a[:, 1] + _box_a[:, 3] / 2
     b2_x1, b2_x2 = _box_b[:, 0] - _box_b[:, 2] / 2, _box_b[:, 0] + _box_b[:, 2] / 2
     b2_y1, b2_y2 = _box_b[:, 1] - _box_b[:, 3] / 2, _box_b[:, 1] + _box_b[:, 3] / 2
@@ -35,11 +36,14 @@ def jaccard(_box_a, _box_b):
     # 求IOU
     union = area_a + area_b - inter
     return inter / union  # [A,B]
-#---------------------------------------------------#
+
+
+# ---------------------------------------------------#
 #   平滑标签
-#---------------------------------------------------#
+# ---------------------------------------------------#
 def smooth_labels(y_true, label_smoothing,num_classes):
     return y_true * (1.0 - label_smoothing) + label_smoothing / num_classes
+
 
 def box_ciou(b1, b2):
     """
@@ -90,21 +94,25 @@ def box_ciou(b1, b2):
     alpha = v / torch.clamp((1.0 - iou + v),min=1e-6)
     ciou = ciou - alpha * v
     return ciou
-  
+
+
 def clip_by_tensor(t,t_min,t_max):
     t=t.float()
-    result = (t >= t_min).float() * t + (t < t_min).float() * t_min
-    result = (result <= t_max).float() * result + (result > t_max).float() * t_max
+    result = (t >= t_min).float() * t + (t < t_min).float() * t_min  # 使 t_min < t
+    result = (result <= t_max).float() * result + (result > t_max).float() * t_max  # 使 t < t_max
     return result
+
 
 def MSELoss(pred,target):
     return (pred-target)**2
+
 
 def BCELoss(pred,target):
     epsilon = 1e-7
     pred = clip_by_tensor(pred, epsilon, 1.0 - epsilon)
     output = -target * torch.log(pred) - (1.0 - target) * torch.log(1.0 - pred)
     return output
+
 
 class YOLOLoss(nn.Module):
     def __init__(self, anchors, num_classes, img_size, label_smooth=0, cuda=True):
@@ -124,6 +132,12 @@ class YOLOLoss(nn.Module):
         self.cuda = cuda
 
     def forward(self, input, targets=None):
+        """
+        计算损失值
+        :param input: 网络的输出，是三个yolo layer层之一， （4，75，13，13）
+        :param targets: 标签，是长度为4的列表，里面有不同的object数量
+        :return:
+        """
         # input为bs,3*(5+num_classes),13,13
         
         # 一共多少张图片
@@ -151,7 +165,7 @@ class YOLOLoss(nn.Module):
         pred_cls = torch.sigmoid(prediction[..., 5:])  # Cls pred.
 
         # 找到哪些先验框内部包含物体
-        mask, noobj_mask, t_box, tconf, tcls, box_loss_scale_x, box_loss_scale_y = self.get_target(targets, scaled_anchors,in_w, in_h,self.ignore_threshold)
+        mask, noobj_mask, t_box, tconf, tcls, box_loss_scale_x, box_loss_scale_y = self.get_target(targets, scaled_anchors, in_w, in_h, self.ignore_threshold)
 
         noobj_mask, pred_boxes_for_ciou = self.get_ignore(prediction, targets, scaled_anchors, in_w, in_h, noobj_mask)
 
@@ -180,51 +194,51 @@ class YOLOLoss(nn.Module):
         # 计算一共有多少张图片
         bs = len(target)
         # 获得先验框
-        anchor_index = [[0,1,2],[3,4,5],[6,7,8]][self.feature_length.index(in_w)]
-        subtract_index = [0,3,6][self.feature_length.index(in_w)]
+        anchor_index = [[0,1,2],[3,4,5],[6,7,8]][self.feature_length.index(in_w)]   # eg. [0,1,2], 通过in_w特征图大小来判断是那个yolo layer
+        subtract_index = [0,3,6][self.feature_length.index(in_w)]   # eg. 0
         # 创建全是0或者全是1的阵列
-        mask = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
-        noobj_mask = torch.ones(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
+        mask = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)        # （4，3，13，13）
+        noobj_mask = torch.ones(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)   # （4，3，13，13）
 
-        tx = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
-        ty = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
-        tw = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
-        th = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
-        t_box = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, 4, requires_grad=False)
-        tconf = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
-        tcls = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, self.num_classes, requires_grad=False)
+        tx = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)          # （4，3，13，13）
+        ty = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)          # （4，3，13，13）
+        tw = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)          # （4，3，13，13）
+        th = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)          # （4，3，13，13）
+        t_box = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, 4, requires_grad=False)    # （4，3，13，13，4）
+        tconf = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)       # （4，3，13，13）
+        tcls = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, self.num_classes, requires_grad=False)  # （4，3，13，13，20）
 
-        box_loss_scale_x = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
-        box_loss_scale_y = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
-        for b in range(bs):
-            if len(target[b])==0:
+        box_loss_scale_x = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)    # （4，3，13，13）
+        box_loss_scale_y = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)    # （4，3，13，13）
+        for b in range(bs):     # 一个batch size中每张图片
+            if len(target[b]) == 0:
                 continue
             # 计算出在特征层上的点位
-            gxs = target[b][:, 0:1] * in_w
+            gxs = target[b][:, 0:1] * in_w  # in_w 13 gxs (8,1)
             gys = target[b][:, 1:2] * in_h
             
-            gws = target[b][:, 2:3] * in_w
-            ghs = target[b][:, 3:4] * in_h
+            gws = target[b][:, 2:3] * in_w  # (8,1)
+            ghs = target[b][:, 3:4] * in_h  # (8,1)
 
             # 计算出属于哪个网格
-            gis = torch.floor(gxs)
-            gjs = torch.floor(gys)
+            gis = torch.floor(gxs)  # (8,1)
+            gjs = torch.floor(gys)  # (8,1)
             
             # 计算真实框的位置
-            gt_box = torch.FloatTensor(torch.cat([torch.zeros_like(gws), torch.zeros_like(ghs), gws, ghs], 1))
+            gt_box = torch.FloatTensor(torch.cat([torch.zeros_like(gws), torch.zeros_like(ghs), gws, ghs], 1))  # (8,4)
             
             # 计算出所有先验框的位置
-            anchor_shapes = torch.FloatTensor(torch.cat((torch.zeros((self.num_anchors, 2)), torch.FloatTensor(anchors)), 1))
+            anchor_shapes = torch.FloatTensor(torch.cat((torch.zeros((self.num_anchors, 2)), torch.FloatTensor(anchors)), 1))   # (9,4)
             # 计算重合程度
-            anch_ious = jaccard(gt_box, anchor_shapes)
+            anch_ious = jaccard(gt_box, anchor_shapes)  # size (8,9)
 
             # Find the best matching anchor box
-            best_ns = torch.argmax(anch_ious,dim=-1)
-            for i, best_n in enumerate(best_ns):
-                if best_n not in anchor_index:
+            best_ns = torch.argmax(anch_ious, dim=-1)    # size=8, tensor([0, 1, 3, 5, 3, 5, 1, 5])
+            for i, best_n in enumerate(best_ns):    # 一张图片中，多个object
+                if best_n not in anchor_index:  # 本yolo layer层
                     continue
                 # Masks
-                gi = gis[i].long()
+                gi = gis[i].long()  # size 1 ， type tensor
                 gj = gjs[i].long()
                 gx = gxs[i]
                 gy = gys[i]
@@ -283,17 +297,17 @@ class YOLOLoss(nn.Module):
         anchor_w = FloatTensor(scaled_anchors).index_select(1, LongTensor([0]))
         anchor_h = FloatTensor(scaled_anchors).index_select(1, LongTensor([1]))
         
-        anchor_w = anchor_w.repeat(bs, 1).repeat(1, 1, in_h * in_w).view(w.shape)
+        anchor_w = anchor_w.repeat(bs, 1).repeat(1, 1, in_h * in_w).view(w.shape)   # （4，3，13，13）
         anchor_h = anchor_h.repeat(bs, 1).repeat(1, 1, in_h * in_w).view(h.shape)
         
         # 计算调整后的先验框中心与宽高
-        pred_boxes = FloatTensor(prediction[..., :4].shape)
+        pred_boxes = FloatTensor(prediction[..., :4].shape)     # （4，3，13，13，4）
         pred_boxes[..., 0] = x + grid_x
         pred_boxes[..., 1] = y + grid_y
         pred_boxes[..., 2] = torch.exp(w) * anchor_w
         pred_boxes[..., 3] = torch.exp(h) * anchor_h
-        for i in range(bs):
-            pred_boxes_for_ignore = pred_boxes[i]
+        for i in range(bs):  # 一个batchsize中每张图片
+            pred_boxes_for_ignore = pred_boxes[i]   # （3，13，13，4） 预测的所有bbox
             pred_boxes_for_ignore = pred_boxes_for_ignore.view(-1, 4)
             if len(target[i]) > 0:
                 gx = target[i][:, 0:1] * in_w
@@ -302,9 +316,9 @@ class YOLOLoss(nn.Module):
                 gh = target[i][:, 3:4] * in_h
                 gt_box = torch.FloatTensor(torch.cat([gx, gy, gw, gh],-1)).type(FloatTensor)
 
-                anch_ious = jaccard(gt_box, pred_boxes_for_ignore)
-                anch_ious_max, _ = torch.max(anch_ious,dim=0)
-                anch_ious_max = anch_ious_max.view(pred_boxes[i].size()[:3])
+                anch_ious = jaccard(gt_box, pred_boxes_for_ignore)  # （8，507）
+                anch_ious_max, _ = torch.max(anch_ious,dim=0)   # size（507）
+                anch_ious_max = anch_ious_max.view(pred_boxes[i].size()[:3])    # （3，13，13）
                 noobj_mask[i][anch_ious_max>self.ignore_threshold] = 0
         return noobj_mask, pred_boxes
 

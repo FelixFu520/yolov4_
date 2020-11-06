@@ -17,13 +17,12 @@ from nets.yolo4 import YoloBody
 from tqdm import tqdm
 
 
-# ---------------------------------------------------#
-#   获得类和先验框
-# ---------------------------------------------------#
 def get_classes(classes_path):
-    '''
-    loads the classes
-    '''
+    """
+    loads the classes; 获得类
+    :param classes_path:
+    :return:
+    """
     with open(classes_path) as f:
         class_names = f.readlines()
     class_names = [c.strip() for c in class_names]
@@ -31,11 +30,15 @@ def get_classes(classes_path):
 
 
 def get_anchors(anchors_path):
-    '''loads the anchors from a file'''
+    """
+    获得先验框；loads the anchors from a file
+    :param anchors_path:
+    :return:
+    """
     with open(anchors_path) as f:
         anchors = f.readline()
     anchors = [float(x) for x in anchors.split(',')]
-    return np.array(anchors).reshape([-1,3,2])[::-1,:,:]
+    return np.array(anchors).reshape([-1, 3, 2])[::-1, :, :]
 
 
 def get_lr(optimizer):
@@ -134,7 +137,7 @@ if __name__ == "__main__":
     anchors_path = 'model_data/yolo_anchors.txt'
     classes_path = 'model_data/voc_classes.txt'   
     class_names = get_classes(classes_path)
-    anchors = get_anchors(anchors_path)
+    anchors = get_anchors(anchors_path)     # 倒序，即anchor大的在前面（三个一组） size （3，3，2）
     num_classes = len(class_names)
     
     # 创建模型
@@ -147,7 +150,7 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_dict = model.state_dict()
     pretrained_dict = torch.load(model_path, map_location=device)
-    pretrained_dict = {k: v for k, v in pretrained_dict.items() if np.shape(model_dict[k]) ==  np.shape(v)}
+    pretrained_dict = {k: v for k, v in pretrained_dict.items() if np.shape(model_dict[k]) == np.shape(v)}
     model_dict.update(pretrained_dict)
     model.load_state_dict(model_dict)
     print('Finished!')
@@ -162,8 +165,8 @@ if __name__ == "__main__":
     # 建立loss函数
     yolo_losses = []
     for i in range(3):
-        yolo_losses.append(YOLOLoss(np.reshape(anchors,[-1,2]),num_classes, \
-                                (input_shape[1], input_shape[0]), smoooth_label, Cuda))
+        yolo_losses.append(YOLOLoss(np.reshape(anchors, [-1, 2]), num_classes,
+                                    (input_shape[1], input_shape[0]), smoooth_label, Cuda))
 
     # 0.1用于验证，0.9用于训练
     val_split = 0.1
@@ -189,11 +192,11 @@ if __name__ == "__main__":
         Init_Epoch = 0
         Freeze_Epoch = 50
         
-        optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
+        optimizer = optim.Adam(net.parameters(), lr, weight_decay=5e-4)
         if Cosine_lr:
             lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5, eta_min=1e-5)
         else:
-            lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
+            lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.95)
 
         if Use_Data_Loader:
             train_dataset = YoloDataset(lines[:num_train], (input_shape[0], input_shape[1]), mosaic=mosaic)
@@ -210,14 +213,14 @@ if __name__ == "__main__":
 
         epoch_size = max(1, num_train//Batch_size)
         epoch_size_val = num_val//Batch_size
-        #------------------------------------#
+        # ------------------------------------#
         #   冻结一定部分训练
-        #------------------------------------#
+        # ------------------------------------#
         for param in model.backbone.parameters():
             param.requires_grad = False
 
-        for epoch in range(Init_Epoch,Freeze_Epoch):
-            fit_one_epoch(net,yolo_losses,epoch,epoch_size,epoch_size_val,gen,gen_val,Freeze_Epoch,Cuda)
+        for epoch in range(Init_Epoch, Freeze_Epoch):
+            fit_one_epoch(net, yolo_losses, epoch, epoch_size, epoch_size_val, gen, gen_val, Freeze_Epoch, Cuda)
             lr_scheduler.step()
 
     if True:
@@ -226,7 +229,7 @@ if __name__ == "__main__":
         Freeze_Epoch = 50
         Unfreeze_Epoch = 100
 
-        optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
+        optimizer = optim.Adam(net.parameters(), lr, weight_decay=5e-4)
         if Cosine_lr:
             lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5, eta_min=1e-5)
         else:
@@ -247,9 +250,9 @@ if __name__ == "__main__":
 
         epoch_size = max(1, num_train//Batch_size)
         epoch_size_val = num_val//Batch_size
-        #------------------------------------#
+        # ------------------------------------#
         #   解冻后训练
-        #------------------------------------#
+        # ------------------------------------#
         for param in model.backbone.parameters():
             param.requires_grad = True
 
