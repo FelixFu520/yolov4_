@@ -46,7 +46,7 @@ print("model set!")
 
 # -------------- export the model
 input_names = ["input_0"]
-output_names = ["output_0"]
+output_names = ["output_0", "output_1", "output_2"]
 
 output_path = "deploy/yolov4.onnx"
 print('exporting model to ONNX...')
