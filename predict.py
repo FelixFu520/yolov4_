@@ -7,10 +7,10 @@ from PIL import Image
 yolo = YOLO()
 
 while True:
-    img = input('Input image filename:')
+    # img = input('Input image filename:')
     try:
-        image = Image.open(img)
-        # image = Image.open("img/street.jpg")
+        # image = Image.open(img)
+        image = Image.open("img/street.jpg")
     except:
         print('Open Error! Try again!')
         continue
@@ -18,3 +18,5 @@ while True:
         r_image = yolo.detect_image(image)
         r_image.show()
         r_image.save("img/street_p.jpg")
+
+    break

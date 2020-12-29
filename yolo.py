@@ -117,11 +117,18 @@ class YOLO(object):
             if self.cuda:
                 images = images.cuda()
             outputs = self.net(images)
-            
+
+        print(type(outputs))
+        print(np.array(outputs)[0].shape)
+        print(outputs)
         output_list = []
         for i in range(3):
             output_list.append(self.yolo_decodes[i](outputs[i]))
+
+
         output = torch.cat(output_list, 1)
+        print(type(output))
+        print(output.shape)
         batch_detections = non_max_suppression(output, len(self.class_names),
                                                 conf_thres=self.confidence,
                                                 nms_thres=self.iou)
@@ -163,7 +170,7 @@ class YOLO(object):
             draw = ImageDraw.Draw(image)
             label_size = draw.textsize(label, font)
             label = label.encode('utf-8')
-            print(label)
+            print("label is ", label)
             
             if top - label_size[1] >= 0:
                 text_origin = np.array([left, top - label_size[1]])
