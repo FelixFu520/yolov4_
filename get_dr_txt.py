@@ -65,6 +65,9 @@ class mAP_Yolo(YOLO):
 
         for i, c in enumerate(top_label):
             predicted_class = self.class_names[c]
+            if len(predicted_class.split()) > 1:
+                predicted_class = predicted_class[0] + predicted_class[1]
+                # print(predicted_class)
             score = str(top_conf[i])
 
             top, left, bottom, right = boxes[i]
