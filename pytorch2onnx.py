@@ -48,7 +48,7 @@ print("model set!")
 input_names = ["input_0"]
 output_names = ["output_0", "output_1", "output_2"]
 
-output_path = "deploy/yolov4.onnx"
+output_path = "deploy/models/yolov4.onnx"
 print('exporting model to ONNX...')
 torch.onnx.export(net, example, output_path, verbose=True, input_names=input_names, output_names=output_names, opset_version=11)
 print('model exported to {:s}'.format(output_path))
