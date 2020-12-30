@@ -185,12 +185,6 @@ mAP目标检测精度计算更新，分别运行`get_gt_txt.py`、`get_dr_txt.py
 
 ## 2. Inferencing
 
-这一部分理论内容[参考](https://github.com/FelixFu520/README/blob/master/notes/models/yolov4.md)，代码部分[参考](https://github.com/FelixFu520/yolov4_deploy)。
-
-参考镜像：`fusimeng/yolo_ti:infer`
-
-从第一部分导出两部分内容，一个是`pth`权重，另一个是`onnx`权重。
-
 ### 2.1 导出模型
 
 #### 2.1.1 导出pytorch格式
@@ -339,20 +333,20 @@ https://github.com/xmba15/onnx_runtime_cpp
 
 使用tvm框架运行在CPU上，测速。
 
-推理100次，用时`39ms`
+推理100次，用时`39ms`(cpp)，`Time elapsed is 0m 38s`(python)
 
-详细代码，参考`deploy/onnx_pc_deploy/`文件夹下的代码。
+详细代码，参考`deploy/tvm_pc_deploy/`文件夹下的代码。
 
 ### 2.3 TensorRT
 
-
+`TODO`
 
 ### 2.4 MNN
 
-
+`TODO`
 
 ### 2.5 NCNN
 
-
+`TODO`
 
 ###  
