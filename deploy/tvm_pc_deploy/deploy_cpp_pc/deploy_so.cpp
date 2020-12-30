@@ -22,7 +22,7 @@ static uint64_t getCurrentTime() {
 void Mat_to_CHW(float *data, cv::Mat &frame)
 {
     assert(data && !frame.empty());
-    unsigned int volChl = 224 * 224;
+    unsigned int volChl = 416 * 416;
 
     for(int c = 0; c < 3; ++c)
     {
@@ -67,7 +67,8 @@ int main(void) {
     
     // 这里依然读取了papar.png这张图
     cv::Mat image , frame, input;
-    image = cv::imread("../../street.jpg");
+//     image = cv::imread("../../street.jpg");
+    image = cv::imread("../../test.png");
     cv::cvtColor(image, frame, cv::COLOR_BGR2RGB);
     cv::resize(frame, input,  cv::Size(416,416));
     float data[416 * 416 * 3];
@@ -124,28 +125,18 @@ int main(void) {
 
     // 将输出的信息打印出来
     auto result = static_cast<float*>(y0->data);
-    std::cout << typeid( y0 ).name() << std::endl;
-    std::cout <<typeid(result).name()<<std::endl;
-    for(int i=0;i<4;i++){
-        std::cout<<y0->shape[i]<<std::endl;
-    }
+//     std::cout << typeid( y0 ).name() << std::endl; //打印类型
+//     std::cout <<typeid(result).name()<<std::endl;
     
-//     for(int i =0;i<10;i++){
-//         std::cout<<result[i]<<std::endl;
+    // 输出shape
+//     for(int i=0;i<4;i++){
+//         std::cout<<y0->shape[i]<<“, ”;
 //     }
-//     for (int i = 0; i < 1; i++){
-//         auto result0 = result[i];
-//         for(int j=0;j<255;j++){
-//             auto result1 = result0[j];
-//             for(int k=0;k<13;k++){
-//                 auto result2 = result1[k];
-//                 for(int l=0;l<13;l++){
-//                     auto result3 = result2[l];
-//                     std::cout<<result3[l]<<std::endl;
-//                 }
-//             }
-//         }
-//     }      
+    
+        
+    for(int i =0;i<13;i++){
+        std::cout<<result[0,0,0,i]<<std::endl;
+    }
     
     return 1;
 }

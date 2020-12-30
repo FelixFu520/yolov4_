@@ -10,7 +10,7 @@ while True:
     # img = input('Input image filename:')
     try:
         # image = Image.open(img)
-        image = Image.open("street.jpg")
+        image = Image.open("test.png")
     except:
         print('Open Error! Try again!')
         continue

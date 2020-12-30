@@ -138,7 +138,7 @@ class YOLO(object):
 
         # print(type(outputs))
         # print(np.array(outputs)[0].shape)
-        # print(outputs)
+        print(outputs)
         output_list = []
         for i in range(3):
             output_list.append(self.yolo_decodes[i](outputs[i]))
