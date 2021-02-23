@@ -1,7 +1,24 @@
 # Yolo v4
 
 2020年12月29日
+```angular2html
+1 Training
+1.1 环境搭建
+1.2 目录解释
+1.3 代码解释
+1.3.1 预测步骤
+1.3.2 数据准备&训练
+1.3.3 评估模型
 
+2 Inference
+2.1 导出模型
+2.1.1 导出pytorch格式
+2.1.2 导出ONNX格式
+2.2 Pytorch
+2.3 ONNX
+2.4 TVM
+2.5 TensorRT
+```
 ---
 
 本文包含YOLO的**训练和推理**的实现流程，主要是代码和操作部分，不包含理论部分学习部分。
@@ -11,9 +28,7 @@
 参考镜像：`docker pull fusimeng/yolo_ti:all`
 
 ## 1. Training
-
 ### 1.1 环境搭建
-
 训练环境如下
 
 | 软件                | 版本         |
@@ -24,21 +39,20 @@
 | Python              | 3.6.9        |
 | pytorch/torchvision | 1.7.0/0.8.1  |
 | onnx                | 1.7          |
-
 ### 1.2目录解释
 
 ```
-|-- img		# 测试图片目录
-|-- -- street.jpg	# 测试图片
+|-- img # 测试图片目录
+|-- -- street.jpg   # 测试图片
 
-|-- logs	# 存放训练结果（权重）目录
+|-- logs    # 存放训练结果（权重）目录
 
 |-- model_data	# 存放模型数据
 |-- -- simhei.ttf
 |-- -- voc_classes.txt
 |-- -- yolo_anchors.txt
 |-- -- coco_classes.txt
-|-- -- yolo4_weights.pth		# coco + voc 数据集的权重（80类）
+|-- -- yolo4_weights.pth	# coco + voc 数据集的权重（80类）
 |-- -- yolo4_voc_weights.pth	# vo数据集权重（20类）
 
 |-- nets	# 存放网络代码
@@ -56,16 +70,16 @@
 |-- -- -- -- ImageSets
 |-- -- -- -- JEPGImages
 
-|-- yolo.py									# 预测时会用到
-|-- predict.py							# 预测代码
-|-- video.py								# 视频预测代码
+|-- yolo.py     # 预测时会用到
+|-- predict.py  # 预测代码
+|-- video.py    # 视频预测代码
 
-|-- test.py									# 查看网络结构
+|-- test.py	    # 查看网络结构
 
 |-- kmeans_for_anchors.py  	# 生成anchors
-|-- voc2yolov4.py 					# voc的xml形式转换为yolo标注形式
-|-- voc_annortation.py			# 生成图片路径和图片中object的位置类别
-|-- train.py								# 训练网络
+|-- voc2yolov4.py   # voc的xml形式转换为yolo标注形式
+|-- voc_annortation.py  # 生成图片路径和图片中object的位置类别
+|-- train.py    # 训练网络
 |-- train_with_tensorboard.py	# 使用tensorboard
 
 |-- get_dr_txt.py						# 获取预测标签
@@ -102,13 +116,8 @@
 |-- questions.md						# 常见问题
 |-- requirements.txt				# 系统环境
 ```
-
-
-
 ### 1.3 代码解释
-
 #### 1.3.1 预测步骤
-
 ##### 1、使用预训练权重
 
 a、下载完库后解压，在百度网盘下载[yolo4_weights.pth](https://pan.baidu.com/s/1lNTRL-ipME8jnrbjE9pEnA)【 密码: 1gnp】或者yolo4_voc_weights.pth【同上】，放入model_data，运行predict.py，输入`img/street.jpg`可完成预测。
@@ -135,7 +144,6 @@ _defaults = {
 c、运行predict.py，输入`img/street.jpg`可完成预测。
 
 d、利用video.py可进行摄像头检测。
-
 #### 1.3.2 数据准备&训练
 
 **1**、本文使用VOC格式进行训练。
@@ -172,7 +180,6 @@ dog
 ```
 
 **8**、运行train.py即可开始训练。
-
 #### 1.3.3 评估模型
 
 mAP目标检测精度计算更新，分别运行`get_gt_txt.py`、`get_dr_txt.py`和`get_map.py`文件。
@@ -181,14 +188,9 @@ mAP目标检测精度计算更新，分别运行`get_gt_txt.py`、`get_dr_txt.py
 >
 > 具体mAP计算过程可参考：https://www.bilibili.com/video/BV1zE411u7Vw
 
-
-
 ## 2. Inferencing
-
 ### 2.1 导出模型
-
 #### 2.1.1 导出pytorch格式
-
 见`train.py`文件中的`torch.save`方法
 
 ```

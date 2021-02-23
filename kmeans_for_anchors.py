@@ -24,14 +24,17 @@ def cas_iou(box, cluster):
 
 
 def avg_iou(box, cluster):
+    """
+    计算某一个anchor到cluster最大的那个，然后将其平均
+    """
     return np.mean([np.max(cas_iou(box[i], cluster)) for i in range(box.shape[0])])
 
 
 def kmeans(box, k):
-    # 取出一共有多少框
+    # 取出一共有多少框，即多少个(w,h)
     row = box.shape[0]  # 30638
     
-    # 每个框各个点的位置
+    # 每个框(w,h)到k个中心点的距离
     distance = np.empty((row, k))   # size (30638, 9)
     
     # 最后的聚类位置
@@ -39,15 +42,15 @@ def kmeans(box, k):
 
     np.random.seed()
 
-    # 随机选9个当聚类中心
+    # 随机选9个框（w，h）当聚类中心
     cluster = box[np.random.choice(row, k, replace=False)]  # size (9,2) eg. [[0.088, 0.12],...]
     # cluster = random.sample(row, k)
     while True:
-        # 计算每一行距离五个点的iou情况。
+        # 计算所有anchor到cluster的距离
         for i in range(row):
             distance[i] = 1 - cas_iou(box[i], cluster)
         
-        # 取出最小点
+        # 取出所有anchor到k个中最短的下标
         near = np.argmin(distance, axis=1)  # size 30638, 30638个框到9个簇心的最短距离的位置
 
         if (last_clu == near).all():
@@ -104,7 +107,7 @@ if __name__ == '__main__':
     data = load_data(path)  # size 30638 eg. [[0.21, 0.32], [0.10, 0.32], ...]
     
     # 使用k聚类算法
-    out = kmeans(data, anchors_num)
+    out = kmeans(data, anchors_num)  # size(9,2)
     out = out[np.argsort(out[:, 0])]
     print('acc:{:.2f}%'.format(avg_iou(data, out) * 100))
     print(out*SIZE)

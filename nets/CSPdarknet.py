@@ -1,3 +1,7 @@
+"""
+author:FelixFu
+description: CSPDarknet中网络的基本组件
+"""
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -14,7 +18,7 @@ class Mish(nn.Module):
         return x * torch.tanh(F.softplus(x))
 
 
-# 卷积块:CONV+BATCHNORM+MISH
+# 卷积块:CONV+BATCHNORM+MISH---> CBM
 class BasicConv(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1):
         super(BasicConv, self).__init__()
@@ -30,7 +34,7 @@ class BasicConv(nn.Module):
         return x
 
 
-# CSPdarknet的结构块的组成部分,内部堆叠的残差块
+# CSPdarknet的结构块的组成部分,内部堆叠的残差块----> Resunit
 class Resblock(nn.Module):
     def __init__(self, channels, hidden_channels=None, residual_activation=nn.Identity()):
         super(Resblock, self).__init__()
@@ -47,7 +51,7 @@ class Resblock(nn.Module):
         return x + self.block(x)
 
 
-#  CSPdarknet的结构块,  存在一个大残差边,  这个大残差边绕过了很多的残差结构
+#  CSPdarknet的结构块,  存在一个大残差边,  这个大残差边绕过了很多的残差结构----> CSPX
 class Resblock_body(nn.Module):
     def __init__(self, in_channels, out_channels, num_blocks, first):
         super(Resblock_body, self).__init__()
@@ -94,11 +98,11 @@ class CSPDarkNet(nn.Module):
         self.feature_channels = [64, 128, 256, 512, 1024]
 
         self.stages = nn.ModuleList([
-            Resblock_body(self.inplanes, self.feature_channels[0], layers[0], first=True),
-            Resblock_body(self.feature_channels[0], self.feature_channels[1], layers[1], first=False),
-            Resblock_body(self.feature_channels[1], self.feature_channels[2], layers[2], first=False),
-            Resblock_body(self.feature_channels[2], self.feature_channels[3], layers[3], first=False),
-            Resblock_body(self.feature_channels[3], self.feature_channels[4], layers[4], first=False)
+            Resblock_body(self.inplanes, self.feature_channels[0], layers[0], first=True),  # CSP1 32->64
+            Resblock_body(self.feature_channels[0], self.feature_channels[1], layers[1], first=False),  # CSP2 64->128
+            Resblock_body(self.feature_channels[1], self.feature_channels[2], layers[2], first=False),  # CSP8 128->256
+            Resblock_body(self.feature_channels[2], self.feature_channels[3], layers[3], first=False),  # CSP8 256->512
+            Resblock_body(self.feature_channels[3], self.feature_channels[4], layers[4], first=False)   # CSP4 512->1024
         ])
 
         self.num_features = 1
@@ -124,7 +128,7 @@ class CSPDarkNet(nn.Module):
 
 
 def darknet53(pretrained, **kwargs):
-    model = CSPDarkNet([1, 2, 8, 8, 4])
+    model = CSPDarkNet([1, 2, 8, 8, 4])  # 1，2，8，8，4 表示CSPX
     if pretrained:
         if isinstance(pretrained, str):
             model.load_state_dict(torch.load(pretrained))
