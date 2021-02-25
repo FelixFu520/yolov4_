@@ -136,8 +136,8 @@ if __name__ == "__main__":
     # 获得先验框和类
     anchors_path = 'model_data/yolo_anchors.txt'
     classes_path = 'model_data/voc_classes.txt'   
-    class_names = get_classes(classes_path)
-    anchors = get_anchors(anchors_path)     # 倒序，即anchor大的在前面（三个一组） size （3，3，2）
+    class_names = get_classes(classes_path)  # 获取类别名称 list
+    anchors = get_anchors(anchors_path)     # 获取anchors 倒序，即anchor大的在前面（三个一组） size （3，3，2）
     num_classes = len(class_names)
     
     # 创建模型
@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     # 权值文件的下载请看README
     model_path = "model_data/yolo4_weights.pth"
-    # 加快模型训练的效率
+    # 加载预训练的权重，加快模型训练的效率
     print('Loading weights into state dict...')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_dict = model.state_dict()

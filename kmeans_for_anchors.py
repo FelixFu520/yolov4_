@@ -112,7 +112,7 @@ if __name__ == '__main__':
     print('acc:{:.2f}%'.format(avg_iou(data, out) * 100))
     print(out*SIZE)
     data = out*SIZE
-    f = open("yolo_anchors.txt", 'w')
+    f = open("model_data/yolo_anchors.txt", 'w')
     row = np.shape(data)[0]
     for i in range(row):
         if i == 0:
